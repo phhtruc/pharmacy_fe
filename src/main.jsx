@@ -1,5 +1,5 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import React from 'react';
 
 // // Import CSS
 import './assets/fonts/icomoon/style.css';
@@ -27,7 +27,7 @@ import 'owl.carousel/dist/assets/owl.theme.default.css';
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
+  <React.StrictMode>
     <App />
-  </StrictMode>,
+  </React.StrictMode>,
 )
