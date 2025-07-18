@@ -1,7 +1,32 @@
-import React from 'react';
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { handleLogout, getDecodedToken } from "../utils/auth";
 
 const Navbar = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const accessToken = localStorage.getItem("accessToken");
+    if (accessToken) {
+      setIsLoggedIn(true);
+      const decodedToken = getDecodedToken();
+      if (decodedToken && decodedToken.sub) {
+        setUsername(decodedToken.sub);
+      }
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, []);
+
+  const onLogout = () => {
+    handleLogout();
+    setIsLoggedIn(false);
+    setUsername("");
+    navigate("/");
+  };
+
   return (
     <div className="site-navbar py-2">
       <div className="search-wrap">
@@ -94,6 +119,40 @@ const Navbar = () => {
             >
               <span className="icon-menu"></span>
             </a>
+          </div>
+          <div className="user-menu">
+            {isLoggedIn ? (
+              <div className="dropdown">
+                <button
+                  className="btn btn-secondary dropdown-toggle"
+                  type="button"
+                  id="dropdownMenuButton"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  <i className="icon-person"></i> Xin chào, {username}
+                </button>
+                <ul
+                  className="dropdown-menu"
+                  aria-labelledby="dropdownMenuButton"
+                >
+                  <li>
+                    <Link className="dropdown-item" to="/profile">
+                      Hồ sơ cá nhân
+                    </Link>
+                  </li>
+                  <li>
+                    <button className="dropdown-item" onClick={onLogout}>
+                      Đăng xuất
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            ) : (
+              <Link to="/login" className="btn btn-primary">
+                Đăng nhập
+              </Link>
+            )}
           </div>
         </div>
       </div>

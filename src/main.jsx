@@ -18,6 +18,7 @@ import './assets/js/jquery.magnific-popup.min.js';
 //import './assets/js/main.js';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import 'jquery-ui-dist/jquery-ui.css';
 import 'owl.carousel/dist/assets/owl.carousel.css';
 import 'owl.carousel/dist/assets/owl.theme.default.css';
