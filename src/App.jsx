@@ -2,16 +2,27 @@ import React from 'react';
 import Navbar from './layouts/Navbar';
 import Footer from './layouts/Footer';
 import AppRoutes from './routes/AppRoutes';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, useLocation } from 'react-router-dom';
 
 const App = () => {
+  const location = useLocation();
+  const hideNavbarFooter = ['/login', '/register'];
+
   return (
-    <BrowserRouter>
-      <Navbar />
+    <>
+      {/* Hiển thị Navbar nếu không nằm trong các đường dẫn cần ẩn */}
+      {!hideNavbarFooter.includes(location.pathname) && <Navbar />}
       <AppRoutes />
-      <Footer />
-    </BrowserRouter>
+      {/* Hiển thị Footer nếu không nằm trong các đường dẫn cần ẩn */}
+      {!hideNavbarFooter.includes(location.pathname) && <Footer />}
+    </>
   );
 };
 
-export default App;
+const AppWrapper = () => (
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>
+);
+
+export default AppWrapper;

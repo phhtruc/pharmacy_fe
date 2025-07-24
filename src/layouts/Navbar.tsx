@@ -1,7 +1,32 @@
-import React from 'react';
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { handleLogout, getDecodedToken } from "../utils/auth";
 
 const Navbar = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const accessToken = localStorage.getItem("accessToken");
+    if (accessToken) {
+      setIsLoggedIn(true);
+      const decodedToken = getDecodedToken();
+      if (decodedToken && decodedToken.sub) {
+        setUsername(decodedToken.sub);
+      }
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, []);
+
+  const onLogout = () => {
+    handleLogout();
+    setIsLoggedIn(false);
+    setUsername("");
+    navigate("/");
+  };
+
   return (
     <div className="site-navbar py-2">
       <div className="search-wrap">
@@ -41,33 +66,84 @@ const Navbar = () => {
                   <Link to="/shop">Store</Link>
                 </li>
                 <li className="has-children">
-                  <Link to="#">Dropdown</Link>
+                  {/* <Link to="#">Dropdown</Link> */}
+                  <button
+                    className="btn btn-link"
+                    style={{ textDecoration: "none", color: "#25262a" }}
+                    onClick={(e) => e.preventDefault()}
+                  >
+                    Dropdown
+                  </button>
                   <ul className="dropdown">
                     <li>
-                      <Link to="#">Supplements</Link>
+                      <button
+                        className="btn btn-link"
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        Supplements
+                      </button>
                     </li>
                     <li className="has-children">
-                      <Link to="#">Vitamins</Link>
+                      {/* <Link to="#">Vitamins</Link> */}
+                      <button
+                        className="btn btn-link"
+                        style={{ textDecoration: "none", color: "#25262a" }}
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        Vitamins
+                      </button>
                       <ul className="dropdown">
                         <li>
-                          <Link to="#">Supplements</Link>
+                          {/* <Link to="#">Supplements</Link> */}
+                          <button
+                            className="btn btn-link"
+                            style={{ textDecoration: "none", color: "#25262a" }}
+                            onClick={(e) => e.preventDefault()}
+                          >
+                            Supplements
+                          </button>
                         </li>
                         <li>
-                          <Link to="#">Vitamins</Link>
+                          {/* <Link to="#">Diet &amp; Nutrition</Link> */}
+                          <button
+                            className="btn btn-link"
+                            style={{ textDecoration: "none", color: "#25262a" }}
+                            onClick={(e) => e.preventDefault()}
+                          >
+                            Nutrition
+                          </button>
                         </li>
                         <li>
-                          <Link to="#">Diet &amp; Nutrition</Link>
-                        </li>
-                        <li>
-                          <Link to="#">Tea &amp; Coffee</Link>
+                          {/* <Link to="#">Tea &amp; Coffee</Link> */}
+                          <button
+                            className="btn btn-link"
+                            style={{ textDecoration: "none", color: "#25262a" }}
+                            onClick={(e) => e.preventDefault()}
+                          >
+                            Coffee
+                          </button>
                         </li>
                       </ul>
                     </li>
                     <li>
-                      <Link to="#">Diet &amp; Nutrition</Link>
+                      {/* <Link to="#">Diet &amp; Nutrition</Link> */}
+                      <button
+                        className="btn btn-link"
+                        style={{ textDecoration: "none", color: "#25262a" }}
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        Nutrition
+                      </button>
                     </li>
                     <li>
-                      <Link to="#">Tea &amp; Coffee</Link>
+                      {/* <Link to="#">Tea &amp; Coffee</Link> */}
+                      <button
+                        className="btn btn-link"
+                        style={{ textDecoration: "none", color: "#25262a" }}
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        Coffee
+                      </button>
                     </li>
                   </ul>
                 </li>
@@ -81,19 +157,60 @@ const Navbar = () => {
             </nav>
           </div>
           <div className="icons">
-            <Link to="#" className="icons-btn d-inline-block js-search-open">
+            <button
+              className="icons-btn d-inline-block js-search-open btn btn-link"
+              style={{ textDecoration: "none" }}
+              onClick={(e) => e.preventDefault()}
+            >
               <span className="icon-search"></span>
-            </Link>
-            <Link to="cart.html" className="icons-btn d-inline-block bag">
+            </button>
+            <Link to="/cart" className="icons-btn d-inline-block bag">
               <span className="icon-shopping-bag"></span>
               <span className="number">2</span>
             </Link>
-            <a
+            {/* <a
               href="#"
               className="site-menu-toggle js-menu-toggle ml-3 d-inline-block d-lg-none"
             >
               <span className="icon-menu"></span>
-            </a>
+            </a> */}
+          </div>
+          <div className="user-menu">
+            {isLoggedIn ? (
+              <div className="dropdown">
+                <button
+                  className="btn btn-secondary dropdown-toggle"
+                  type="button"
+                  id="dropdownMenuButton"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  <i className="icon-person"></i> Xin chào, {username}
+                </button>
+                <ul
+                  className="dropdown-menu"
+                  aria-labelledby="dropdownMenuButton"
+                >
+                  <li>
+                    {/* <Link className="dropdown-item" to="/profile">
+                      Hồ sơ cá nhân
+                    </Link> */}
+                    <button className="dropdown-item">
+                      Hồ sơ cá nhân
+                    </button>
+                  </li>
+                  <li>
+                    <button className="dropdown-item" onClick={onLogout}>
+                      Đăng xuất
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            ) : (
+              <Link to="/login" className="btn btn-primary">
+                Đăng nhập
+              </Link>
+            )}
           </div>
         </div>
       </div>
