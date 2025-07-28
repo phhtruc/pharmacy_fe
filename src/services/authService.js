@@ -13,3 +13,17 @@ export const login = async (username, password) => {
 
   return response.json();
 };
+
+export const register = async (username, password, roles) => {
+  const response = await fetch(`${API_ROOT}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password, roles }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Đăng ký thất bại. Vui lòng thử lại.");
+  }
+
+  return response.json();
+};
