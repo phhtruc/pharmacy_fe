@@ -13,16 +13,29 @@ export const getDecodedToken = () => {
   return null;
 };
 
-export const isTokenExpired = () => {
+export const getUserFromToken = () => {
   const decoded = getDecodedToken();
   if (decoded) {
-    const currentTime = Date.now() / 1000; // Thời gian hiện tại (tính bằng giây)
-    return decoded.exp < currentTime;
+    return {
+      username: decoded.sub || "",
+      roles: decoded.roles || [],
+    };
   }
-  return true; // Nếu không có token, coi như đã hết hạn
+  return null;
 };
 
-export const handleLogout = () => {
+export const removeTokens = () => {
   localStorage.removeItem("accessToken");
   localStorage.removeItem("refreshToken");
+};
+
+export const saveTokens = (accessToken, refreshToken) => {
+  localStorage.setItem("accessToken", accessToken);
+  if (refreshToken) {
+    localStorage.setItem("refreshToken", refreshToken);
+  }
+};
+
+export const isAuthenticated = () => {
+  return !!localStorage.getItem("accessToken");
 };
