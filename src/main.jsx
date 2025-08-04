@@ -24,6 +24,30 @@ import 'owl.carousel/dist/assets/owl.carousel.css';
 import 'owl.carousel/dist/assets/owl.theme.default.css';
 //import 'magnific-popup/dist/magnific-popup.css';
 
+// Import CSS files Admin
+import './assets/admin/images/favicon.ico'
+import './assets/admin/css/bootstrap.min.css'
+import './assets/admin/css/typography.css'
+import './assets/admin/css/style.css'
+import './assets/admin/css/responsive.css'
+import './assets/admin/js/jquery.min.js'
+// import './assets/admin/js/popper.min.js'
+import './assets/admin/js/bootstrap.min.js'
+import './assets/admin/js/jquery.appear.js'
+import './assets/admin/js/countdown.min.js'
+// import './assets/admin/js/waypoints.min.js'
+import './assets/admin/js/jquery.counterup.min.js'
+// import './assets/admin/js/wow.min.js'
+import './assets/admin/js/apexcharts.js'
+import './assets/admin/js/slick.min.js'
+import './assets/admin/js/select2.min.js'
+import './assets/admin/js/owl.carousel.min.js'
+import './assets/admin/js/jquery.magnific-popup.min.js'
+import './assets/admin/js/smooth-scrollbar.js'
+import './assets/admin/js/lottie.js'
+import './assets/admin/js/chart-custom.js'
+import './assets/admin/js/custom.js'
+
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(

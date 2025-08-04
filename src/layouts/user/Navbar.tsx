@@ -1,29 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { handleLogout, getDecodedToken } from "../utils/auth";
+import { useAuth } from "../../utils/AuthContext";
 
 const Navbar = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState("");
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const accessToken = localStorage.getItem("accessToken");
-    if (accessToken) {
-      setIsLoggedIn(true);
-      const decodedToken = getDecodedToken();
-      if (decodedToken && decodedToken.sub) {
-        setUsername(decodedToken.sub);
-      }
-    } else {
-      setIsLoggedIn(false);
-    }
-  }, []);
-
-  const onLogout = () => {
-    handleLogout();
-    setIsLoggedIn(false);
-    setUsername("");
+  const handleLogout = () => {
+    logout();
     navigate("/");
   };
 
@@ -31,10 +15,14 @@ const Navbar = () => {
     <div className="site-navbar py-2">
       <div className="search-wrap">
         <div className="container">
-          <Link to="#" className="search-close js-search-close">
+          <Link
+            to="#"
+            className="search-close js-search-close"
+            onClick={(e) => e.preventDefault()}
+          >
             <span className="icon-close2"></span>
           </Link>
-          <form action="#" method="post">
+          <form action="#" method="post" onSubmit={(e) => e.preventDefault()}>
             <input
               type="text"
               className="form-control"
@@ -48,7 +36,7 @@ const Navbar = () => {
         <div className="d-flex align-items-center justify-content-between">
           <div className="logo">
             <div className="site-logo">
-              <Link to="index.html" className="js-logo-clone">
+              <Link to="/" className="js-logo-clone">
                 Pharma
               </Link>
             </div>
@@ -66,7 +54,6 @@ const Navbar = () => {
                   <Link to="/shop">Store</Link>
                 </li>
                 <li className="has-children">
-                  {/* <Link to="#">Dropdown</Link> */}
                   <button
                     className="btn btn-link"
                     style={{ textDecoration: "none", color: "#25262a" }}
@@ -84,7 +71,6 @@ const Navbar = () => {
                       </button>
                     </li>
                     <li className="has-children">
-                      {/* <Link to="#">Vitamins</Link> */}
                       <button
                         className="btn btn-link"
                         style={{ textDecoration: "none", color: "#25262a" }}
@@ -94,7 +80,6 @@ const Navbar = () => {
                       </button>
                       <ul className="dropdown">
                         <li>
-                          {/* <Link to="#">Supplements</Link> */}
                           <button
                             className="btn btn-link"
                             style={{ textDecoration: "none", color: "#25262a" }}
@@ -104,7 +89,6 @@ const Navbar = () => {
                           </button>
                         </li>
                         <li>
-                          {/* <Link to="#">Diet &amp; Nutrition</Link> */}
                           <button
                             className="btn btn-link"
                             style={{ textDecoration: "none", color: "#25262a" }}
@@ -114,7 +98,6 @@ const Navbar = () => {
                           </button>
                         </li>
                         <li>
-                          {/* <Link to="#">Tea &amp; Coffee</Link> */}
                           <button
                             className="btn btn-link"
                             style={{ textDecoration: "none", color: "#25262a" }}
@@ -126,7 +109,6 @@ const Navbar = () => {
                       </ul>
                     </li>
                     <li>
-                      {/* <Link to="#">Diet &amp; Nutrition</Link> */}
                       <button
                         className="btn btn-link"
                         style={{ textDecoration: "none", color: "#25262a" }}
@@ -136,7 +118,6 @@ const Navbar = () => {
                       </button>
                     </li>
                     <li>
-                      {/* <Link to="#">Tea &amp; Coffee</Link> */}
                       <button
                         className="btn btn-link"
                         style={{ textDecoration: "none", color: "#25262a" }}
@@ -168,15 +149,9 @@ const Navbar = () => {
               <span className="icon-shopping-bag"></span>
               <span className="number">2</span>
             </Link>
-            {/* <a
-              href="#"
-              className="site-menu-toggle js-menu-toggle ml-3 d-inline-block d-lg-none"
-            >
-              <span className="icon-menu"></span>
-            </a> */}
           </div>
           <div className="user-menu">
-            {isLoggedIn ? (
+            {user ? (
               <div className="dropdown">
                 <button
                   className="btn btn-secondary dropdown-toggle"
@@ -185,31 +160,39 @@ const Navbar = () => {
                   data-bs-toggle="dropdown"
                   aria-expanded="false"
                 >
-                  <i className="icon-person"></i> Xin chào, {username}
+                  <i className="icon-person"></i> Xin chào,{" "}
+                  {user.username || user.fullName}
                 </button>
                 <ul
                   className="dropdown-menu"
                   aria-labelledby="dropdownMenuButton"
                 >
                   <li>
-                    {/* <Link className="dropdown-item" to="/profile">
+                    <Link className="dropdown-item" to="/profile">
                       Hồ sơ cá nhân
-                    </Link> */}
-                    <button className="dropdown-item">
-                      Hồ sơ cá nhân
-                    </button>
+                    </Link>
                   </li>
                   <li>
-                    <button className="dropdown-item" onClick={onLogout}>
+                    <Link className="dropdown-item" to="/orders">
+                      Đơn hàng của tôi
+                    </Link>
+                  </li>
+                  <li>
+                    <button className="dropdown-item" onClick={handleLogout}>
                       Đăng xuất
                     </button>
                   </li>
                 </ul>
               </div>
             ) : (
-              <Link to="/login" className="btn btn-primary">
-                Đăng nhập
-              </Link>
+              <div className="d-flex">
+                <Link to="/login" className="btn btn-primary me-2">
+                  Đăng nhập
+                </Link>
+                <Link to="/register" className="btn btn-outline-primary">
+                  Đăng ký
+                </Link>
+              </div>
             )}
           </div>
         </div>
