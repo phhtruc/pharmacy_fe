@@ -1,15 +1,16 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Home from '../pages/Home';
-import HomeEmployee from '../pages/employee/Home';
-import HomeAdmin from '../pages/admin/Home';
-import About from '../pages/About';
-import Contact from '../pages/Contact';
-import Shop from '../pages/Shop';
-import Login from '../pages/Login';
-import Register from '../pages/Register';
-import ProtectedRoute from '../components/ProtectedRoute';
-import { useAuth } from '../utils/AuthContext';
+import React from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Home from "../pages/Home";
+import HomeEmployee from "../pages/employee/Home";
+import HomeAdmin from "../pages/admin/Home";
+import About from "../pages/About";
+import Contact from "../pages/Contact";
+import Shop from "../pages/Shop";
+import Login from "../pages/Login";
+import Register from "../pages/Register";
+import ProtectedRoute from "../components/ProtectedRoute";
+import { useAuth } from "../utils/AuthContext";
+import MedicineManager from "../pages/employee/MedicineManager";
 
 const AppRoutes = () => {
   const { user } = useAuth();
@@ -21,17 +22,43 @@ const AppRoutes = () => {
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/shop" element={<Shop />} />
-      <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-      <Route path="/register" element={user ? <Navigate to="/" replace /> : <Register />} />
-      
+      <Route
+        path="/login"
+        element={user ? <Navigate to="/" replace /> : <Login />}
+      />
+      <Route
+        path="/register"
+        element={user ? <Navigate to="/" replace /> : <Register />}
+      />
+
       {/* Protected routes */}
-      <Route path="/employee/*" element={
-        <ProtectedRoute element={<HomeEmployee />} requiredRoles={["EMPLOYEE", "ADMIN"]} />
-      } />
-      
-      <Route path="/admin/*" element={
-        <ProtectedRoute element={<HomeAdmin />} requiredRoles={['ADMIN']} />
-      } />
+      <Route
+        path="/employee/*"
+        element={
+          <>
+            <ProtectedRoute
+              element={<HomeEmployee />}
+              requiredRoles={["EMPLOYEE", "ADMIN"]}
+            />
+          </>
+        }
+      />
+      <Route
+        path="/employee/medicines"
+        element={
+          <ProtectedRoute
+            element={<MedicineManager />}
+            requiredRoles={["EMPLOYEE", "ADMIN"]}
+          />
+        }
+      />
+
+      <Route
+        path="/admin/*"
+        element={
+          <ProtectedRoute element={<HomeAdmin />} requiredRoles={["ADMIN"]} />
+        }
+      />
     </Routes>
   );
 };

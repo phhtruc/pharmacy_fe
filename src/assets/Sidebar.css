@@ -1,0 +1,18 @@
+/* Đảm bảo sidebar scrollbar có chiều cao đầy đủ */
+#sidebar-scrollbar {
+  height: calc(100vh - 70px); /* Điều chỉnh theo chiều cao của logo */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Đảm bảo menu chiếm hết chiều cao có sẵn */
+.iq-sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Đẩy menu cuối cùng xuống dưới cùng */
+.flex-grow-1 {
+  flex-grow: 1;
+}

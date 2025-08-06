@@ -2,7 +2,7 @@ import React from "react";
 import { useAuth } from "../../utils/AuthContext";
 
 const Narbar = () => {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const handleLogout = () => {
     logout();
@@ -15,11 +15,12 @@ const Narbar = () => {
           <div className="top-logo">
             <a href="index.html" className="logo">
               <img src="/images_admin/logo.png" className="img-fluid" alt="" />
-              <span>Sofbox</span>
+              <span>Pharmacy</span>
             </a>
           </div>
         </div>
-        <div className="navbar-breadcrumb">
+        {/* todo */}
+        {/* <div className="navbar-breadcrumb">
           <h5 className="mb-0">Dashboard</h5>
           <nav aria-label="breadcrumb">
             <ul className="breadcrumb">
@@ -31,7 +32,7 @@ const Narbar = () => {
               </li>
             </ul>
           </nav>
-        </div>
+        </div> */}
         <nav className="navbar navbar-expand-lg navbar-light p-0">
           <button
             className="navbar-toggler"
@@ -52,7 +53,8 @@ const Narbar = () => {
             </div>
           </div>
           <div className="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul className="navbar-nav ml-auto navbar-list">
+            {/* todo */}
+            {/* <ul className="navbar-nav ml-auto navbar-list">
               <li className="nav-item">
                 <a className="search-toggle iq-waves-effect" href="#">
                   <i className="ri-search-line"></i>
@@ -267,7 +269,7 @@ const Narbar = () => {
                   <i className="ri-fullscreen-line"></i>
                 </a>
               </li>
-            </ul>
+            </ul> */}
           </div>
           <ul className="navbar-list">
             <li>
@@ -286,11 +288,11 @@ const Narbar = () => {
                   <div className="iq-card-body p-0 ">
                     <div className="bg-primary p-3">
                       <h5 className="mb-0 text-white line-height">
-                        Hello Nik jone
+                        {user?.username || user?.fullName}
                       </h5>
-                      <span className="text-white font-size-12">Available</span>
                     </div>
-                    <a
+                    {/* todo */}
+                    {/* <a
                       href="profile.html"
                       className="iq-sub-card iq-bg-primary-hover"
                     >
@@ -353,7 +355,7 @@ const Narbar = () => {
                           </p>
                         </div>
                       </div>
-                    </a>
+                    </a> */}
                     <div className="d-inline-block w-100 text-center p-3">
                       <button
                         className="iq-bg-danger iq-sign-btn"

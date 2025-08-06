@@ -105,14 +105,16 @@ const App = () => {
 };
 
 const AppWrapper = () => {
-
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </BrowserRouter>
-  )
+    // <BrowserRouter>
+    //   <AuthProvider>
+    //     <App />
+    //   </AuthProvider>
+    // </BrowserRouter>
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  );
 };
 
 export default AppWrapper;
