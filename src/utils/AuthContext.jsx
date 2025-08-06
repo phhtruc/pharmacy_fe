@@ -32,16 +32,15 @@ export const AuthProvider = ({ children }) => {
 
     if (userData) {
       setUser(userData);
-      console.log("User data:", userData);
       if (userData.roles.includes("ADMIN")) {
         toast.success("Đăng nhập thành công với quyền Admin");
         setTimeout(() => {
-          navigate("/admin", { replace: true });
+          navigate("/admin/dashboard", { replace: true });
         }, 100);
       } else if (userData.roles.includes("EMPLOYEE")) {
         toast.success("Đăng nhập thành công với quyền Nhân viên");
         setTimeout(() => {
-          navigate("/employee", { replace: true });
+          navigate("/employee/dashboard", { replace: true });
         }, 100);
       } else {
         setTimeout(() => {

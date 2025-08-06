@@ -4,7 +4,6 @@ import { removeTokens } from './auth';
 
 const API_ROOT = import.meta.env.VITE_APP_ROOT_API;
 
-// Tạo instance Axios với URL gốc
 const api = axios.create({
   baseURL: API_ROOT,
   headers: {
@@ -12,13 +11,10 @@ const api = axios.create({
   },
 });
 
-// Interceptor cho requests - tự động đính kèm token
 api.interceptors.request.use(
   (config) => {
-    // Lấy token từ localStorage
     const token = localStorage.getItem('accessToken');
     
-    // Nếu token tồn tại, thêm vào header
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -30,7 +26,6 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor cho responses - xử lý token hết hạn
 api.interceptors.response.use(
   (response) => {
     return response;
@@ -38,37 +33,31 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
-    // Nếu lỗi 401 (Unauthorized) và chưa thử refresh token
+    // 401 (Unauthorized) 
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
       try {
-        // Lấy refresh token từ localStorage
         const refreshTokenValue = localStorage.getItem('refreshToken');
         
         if (!refreshTokenValue) {
-          // Nếu không có refresh token, logout
           removeTokens();
           window.location.href = '/login';
           return Promise.reject(error);
         }
         
-        // Gọi API refresh token
         const response = await refreshToken(refreshTokenValue);
         
-        // Lưu token mới
-        localStorage.setItem('accessToken', response.data.accessToken);
+        localStorage.setItem('accessToken', response.data.data.accessToken);
         if (response.data.refreshToken) {
           localStorage.setItem('refreshToken', response.data.refreshToken);
         }
         
-        // Cập nhật token trong header của request gốc
         originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
         
-        // Thử lại request gốc
         return api(originalRequest);
       } catch (refreshError) {
-        // Nếu refresh token thất bại, logout
+        
         removeTokens();
         window.location.href = '/login';
         return Promise.reject(refreshError);
