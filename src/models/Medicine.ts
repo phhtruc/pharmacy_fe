@@ -1,4 +1,4 @@
-export interface KindOfMedicine {
+export interface kindOfMedicineEntity {
   id: number;
   code: string;
   name: string;
@@ -24,6 +24,6 @@ export interface Medicine {
   retailProfit: number;
   activeElement: string;
   images: string[];
-  kindOfMedicine: KindOfMedicine;
+  kindOfMedicineEntity: kindOfMedicineEntity;
   unitDetails: UnitDetail[];
 }
