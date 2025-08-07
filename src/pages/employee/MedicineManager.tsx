@@ -87,9 +87,12 @@ const MedicineManager = () => {
               <div className="iq-card-body">
                 <div id="table" className="table-editable">
                   <span className="table-add float-right mb-3 mr-2">
-                    <button className="btn btn-sm iq-bg-success">
+                    <button
+                      className="btn btn-sm iq-bg-success"
+                      onClick={() => navigate("/employee/medicines/add")}
+                    >
                       <i className="ri-add-fill">
-                        <span className="pl-1">Add New</span>
+                      <span className="pl-1">Add New</span>
                       </i>
                     </button>
                   </span>
@@ -125,7 +128,7 @@ const MedicineManager = () => {
                               <td>{medicine.name}</td>
                               <td>{medicine.price} VND</td>
                               <td>{medicine.origin}</td>
-                              <td>{medicine.kindOfMedicine?.name}</td>
+                              <td>{medicine.kindOfMedicineEntity?.name}</td>
                               <td>
                                 <button
                                   className="btn btn-sm btn-info mr-2"
