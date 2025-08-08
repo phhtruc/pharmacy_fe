@@ -35,9 +35,19 @@ export const createMedicine = async (medicineData) => {
 export const fetchMedicineById = async (id) => {
   try {
     const response = await api.get(`/medicines/${id}`);
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching medicine:", error);
+    throw error;
+  }
+};
+
+export const updateMedicine = async (id, medicineData) => {
+  try {
+    const response = await api.put(`/medicines/${id}`, medicineData);
     return response.data;
   } catch (error) {
-    console.error("Error creating medicine:", error);
+    console.error("Error updating medicine:", error);
     throw error;
   }
 };

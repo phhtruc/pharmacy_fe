@@ -12,6 +12,8 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import { useAuth } from "../utils/AuthContext";
 import MedicineManager from "../pages/employee/MedicineManager";
 import CreateMedicine from "../pages/employee/CreateMedicine";
+import UpdateMedicine from "../pages/employee/UpdateMedicine";
+import DetailMedicine from "../pages/employee/DetailMedicine";
 
 const AppRoutes = () => {
   const { user } = useAuth();
@@ -58,6 +60,24 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute
             element={<CreateMedicine />}
+            requiredRoles={["EMPLOYEE", "ADMIN"]}
+          />
+        }
+      />
+      <Route
+        path="/employee/medicines/:id/edit"
+        element={
+          <ProtectedRoute
+            element={<UpdateMedicine />}
+            requiredRoles={["EMPLOYEE", "ADMIN"]}
+          />
+        }
+      />
+      <Route
+        path="/employee/medicines/:id"
+        element={
+          <ProtectedRoute
+            element={<DetailMedicine />}
             requiredRoles={["EMPLOYEE", "ADMIN"]}
           />
         }

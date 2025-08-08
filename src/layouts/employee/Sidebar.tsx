@@ -28,7 +28,7 @@ const Sidebar = () => {
                 aria-expanded="false"
               >
                 <i className="ri-home-4-line"></i>
-                <span>Dashboard</span>
+                <span>Biểu đồ - Thống kê</span>
               </Link>
             </li>
             <li className={isActive("/employee/medicines")}>
@@ -41,7 +41,7 @@ const Sidebar = () => {
                 aria-expanded="false"
               >
                 <i className="ri-mail-line"></i>
-                <span>Medication management</span>
+                <span>Quản Lý Thuốc</span>
               </Link>
             </li>
           </ul>

@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { Formik, Form, Field, ErrorMessage, FieldArray } from "formik";
+import { useParams, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
-import { createMedicine } from "../../services/medicineService";
-import { getAllKindOfMedicines } from "../../services/kindOfMedicineService";
-import { getAllUnits } from "../../services/unitService";
-import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { Formik, Form, Field, ErrorMessage, FormikHelpers } from "formik";
+import { Medicine } from "../../models/Medicine";
 import { KindOfMedicine } from "../../models/KindOfMedicine";
 import { Unit } from "../../models/Unit";
 import { UnitDetail } from "../../models/UnitDetail";
-import { FormikErrors } from "formik";
+import {
+  fetchMedicineById,
+  updateMedicine,
+} from "../../services/medicineService";
+import { getAllKindOfMedicines } from "../../services/kindOfMedicineService";
+import { getAllUnits } from "../../services/unitService";
 import { uploadFiles } from "../../services/fileService";
+import { toast } from "react-toastify";
 import Select from "react-select";
+import { FormikErrors, FieldArray } from "formik";
 
 // FilePond imports
 import { FilePond, registerPlugin } from "react-filepond";
@@ -20,12 +24,16 @@ import FilePondPluginImagePreview from "filepond-plugin-image-preview";
 import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
 import FilePondPluginFileValidateType from "filepond-plugin-file-validate-type";
 import FilePondPluginFileValidateSize from "filepond-plugin-file-validate-size";
+import FilePondPluginImageExifOrientation from "filepond-plugin-image-exif-orientation";
+import FilePondPluginImageTransform from "filepond-plugin-image-transform";
 
 // Register FilePond plugins
 registerPlugin(
   FilePondPluginImagePreview,
   FilePondPluginFileValidateType,
-  FilePondPluginFileValidateSize
+  FilePondPluginFileValidateSize,
+  FilePondPluginImageExifOrientation,
+  FilePondPluginImageTransform
 );
 
 interface FormValues {
@@ -33,23 +41,26 @@ interface FormValues {
   price: string;
   quantity: number;
   vat: number;
+  kindOfMedicineId: number;
+  unitId: number;
   note: string;
   maker: string;
   origin: string;
   retailProfit: number;
   activeElement: string;
-  kindOfMedicineId: number;
   unitDetails: UnitDetail[];
-  images: File[];
-  imageUrls?: string[];
 }
 
-const CreateMedicine: React.FC = () => {
+const UpdateMedicine: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const [medicine, setMedicine] = useState<Medicine | null>(null);
   const [kindOfMedicines, setKindOfMedicines] = useState<KindOfMedicine[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [fetchingData, setFetchingData] = useState<boolean>(true);
   const [files, setFiles] = useState<any[]>([]);
-  const [pond, setPond] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Validation schema
@@ -69,15 +80,13 @@ const CreateMedicine: React.FC = () => {
       .required("VAT là bắt buộc")
       .min(0, "VAT không được âm")
       .max(100, "VAT không được vượt quá 100%"),
-    maker: Yup.string().required("Nhà sản xuất là bắt buộc"),
-    origin: Yup.string().required("Xuất xứ là bắt buộc"),
-    retailProfit: Yup.number()
-      .required("Lợi nhuận bán lẻ là bắt buộc")
-      .min(0, "Lợi nhuận không được âm"),
-    activeElement: Yup.string().required("Thành phần hoạt chất là bắt buộc"),
-    kindOfMedicineId: Yup.number()
-      .required("Loại thuốc là bắt buộc")
-      .test("is-valid-kind", "Vui lòng chọn loại thuốc", (value) => value > 0),
+    kindOfMedicineId: Yup.number().required("Loại thuốc là bắt buộc"),
+    unitId: Yup.number().required("Đơn vị tính là bắt buộc"),
+    note: Yup.string(),
+    maker: Yup.string(),
+    origin: Yup.string(),
+    retailProfit: Yup.number(),
+    activeElement: Yup.string(),
     unitDetails: Yup.array()
       .of(
         Yup.object().shape({
@@ -94,130 +103,208 @@ const CreateMedicine: React.FC = () => {
         })
       )
       .min(1, "Vui lòng thêm ít nhất một đơn vị"),
-    images: Yup.array()
-      .min(1, "Vui lòng tải lên ít nhất một hình ảnh")
-      .max(10, "Bạn chỉ có thể tải lên tối đa 10 ảnh cùng lúc"),
   });
 
-  // Fetch data for kind of medicines and units
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [kindOfMedicinesResponse, unitsResponse] = await Promise.all([
+        setFetchingData(true);
+        setError(null);
+
+        // Fetch kind of medicines and units first
+        const [kindOfMedicineData, unitsData] = await Promise.all([
           getAllKindOfMedicines(1, 1000),
           getAllUnits(1, 1000),
         ]);
 
-        setKindOfMedicines(kindOfMedicinesResponse.data.items || []);
-        setUnits(unitsResponse.data.items || []);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        toast.error("Không thể tải dữ liệu. Vui lòng thử lại sau.");
+        // Ensure we received arrays
+        setKindOfMedicines(kindOfMedicineData?.data?.items || []);
+        setUnits(unitsData?.data?.items || []);
+
+        // Fetch medicine data if ID exists
+        if (id) {
+          const medicineData = await fetchMedicineById(id);
+          if (medicineData) {
+            setMedicine(medicineData);
+
+            // Initialize FilePond files with existing images
+            if (medicineData.images && medicineData.images.length > 0) {
+              const initialFiles = medicineData.images.map((url: string) => ({
+                source: url,
+                options: {
+                  type: "local",
+                },
+              }));
+              setFiles(initialFiles);
+            }
+          } else {
+            setError("Không tìm thấy thuốc");
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Đã xảy ra lỗi khi tải dữ liệu");
+        toast.error("Đã xảy ra lỗi khi tải dữ liệu");
+      } finally {
+        setFetchingData(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [id]);
 
-  // Handle FilePond file changes
-  const handleFilePondUpdate = (fileItems: any[], setFieldValue: any) => {
-    // Lưu trữ files từ FilePond
-    setFiles(fileItems);
-
-    // Chuyển đổi FilePond fileItems thành File objects để tương thích với logic cũ
-    const processedFiles = fileItems.map((fileItem) => fileItem.file);
-
-    // Cập nhật formik values
-    if (fileItems.length > 0) {
-      setFieldValue("images", processedFiles);
-    } else {
-      setFieldValue("images", []);
-    }
+  // Extract files from FilePond items for upload
+  const getFilesToUpload = (fileItems: any[]): File[] => {
+    return fileItems
+      .filter((fileItem) => fileItem.file && fileItem.origin !== 2) // Filter out server files
+      .map((fileItem) => fileItem.file);
   };
 
-  // Handle form submission
-  const handleSubmit = async (values: FormValues, { setSubmitting }: any) => {
+  // Extract URLs of files that are already on the server
+  const getExistingFileUrls = (fileItems: any[]): string[] => {
+    return fileItems
+      .filter((fileItem) => fileItem.origin === 2)
+      .map((fileItem) => fileItem.source);
+  };
+
+  const handleSubmit = async (
+    values: FormValues,
+    { setSubmitting }: FormikHelpers<FormValues>
+  ) => {
     try {
-      setLoading(true);
-
-      // Step 1: Upload images first
-      if (values.images && values.images.length > 0) {
-        try {
-          // Upload files and get URLs
-          const uploadResult = await uploadFiles(values.images);
-
-          // Check if upload was successful and we have URLs
-          if (
-            !uploadResult.data ||
-            !Array.isArray(uploadResult.data) ||
-            uploadResult.data.length === 0
-          ) {
-            throw new Error("Không nhận được URL hình ảnh sau khi tải lên");
-          }
-
-          // Store the returned URLs
-          values.imageUrls = uploadResult.data;
-
-          console.log("Tải ảnh thành công:", values.imageUrls);
-        } catch (error: any) {
-          console.error("Lỗi khi tải lên hình ảnh:", error);
-          toast.error(error.message || "Đã xảy ra lỗi khi tải lên hình ảnh.");
-          setLoading(false);
-          setSubmitting(false);
-          return; // Stop the submission if image upload fails
-        }
-      } else {
-        toast.error("Vui lòng tải lên ít nhất một hình ảnh");
-        setLoading(false);
+      // Check if there are any files selected
+      if (files.length === 0) {
+        setImageError("Vui lòng tải lên ít nhất một hình ảnh");
         setSubmitting(false);
         return;
       }
 
-      // Step 2: Prepare medicine data with the image URLs
-      const medicineData = {
-        name: values.name,
-        price: values.price,
-        quantity: values.quantity,
-        vat: values.vat,
-        note: values.note || "",
-        maker: values.maker,
-        origin: values.origin,
-        retailProfit: values.retailProfit,
-        activeElement: values.activeElement,
-        kindOfMedicineId: values.kindOfMedicineId,
-        unitDetails: values.unitDetails,
-        imageUrls: values.imageUrls, // Include the image URLs from the upload response
-      };
+      setLoading(true);
+      setError(null);
+      setImageError(null);
 
-      // Step 3: Submit medicine creation form
-      const response = await createMedicine(medicineData);
-      toast.success("Thêm thuốc thành công!");
+      // Upload files and get URLs
+      let images: string[] = [];
+
+      // Get existing image URLs
+      const existingUrls = getExistingFileUrls(files);
+
+      // Get new files to upload
+      const filesToUpload = getFilesToUpload(files);
+
+      if (filesToUpload.length > 0) {
+        const uploadResult = await uploadFiles(filesToUpload);
+        if (uploadResult) {
+          // Check if uploadResult has a data property containing the array of URLs
+          if (uploadResult.data && Array.isArray(uploadResult.data)) {
+            images = [...existingUrls, ...uploadResult.data];
+          } else {
+            // Fallback in case structure is different
+            images = existingUrls;
+            toast.warning("Không thể tải hình ảnh mới lên. Chỉ sử dụng hình ảnh hiện có.");
+          }
+        }
+      } else {
+        images = existingUrls;
+      }
+
+      if (!id) {
+        setError("Không tìm thấy ID thuốc");
+        toast.error("Không tìm thấy ID thuốc");
+        return;
+      }
+
+      // Update medicine
+      await updateMedicine(id, {
+        ...values,
+        price: Number(values.price),
+        imageUrls: images,
+        kindOfMedicineEntity: {
+          id: values.kindOfMedicineId,
+          code: "",
+          name: "",
+        },
+        unitDetails: values.unitDetails.map((detail) => ({
+          id: detail.unitId || 0,
+          unitId: detail.unitId,
+          unitName: "", // Will be filled on server side
+          conversionUnit: detail.conversionUnit,
+        })),
+      });
+
+      toast.success("Cập nhật thuốc thành công!");
       navigate("/employee/medicines");
-    } catch (error: any) {
-      console.error("Lỗi khi tạo thuốc:", error);
-      toast.error(
-        error.response?.data?.message || "Đã xảy ra lỗi khi thêm thuốc."
-      );
+    } catch (err: any) {
+      console.error("Error updating medicine:", err);
+      const errorMessage = err.message || "Đã xảy ra lỗi khi cập nhật thuốc";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
       setSubmitting(false);
     }
   };
 
-  // Initial values
+  if (fetchingData) {
+    return (
+      <div id="content-page" className="content-page">
+        <div className="container-fluid">
+          <div className="row">
+            <div className="col-lg-12 text-center p-5">
+              <div className="spinner-border text-primary" role="status">
+                <span className="sr-only">Loading...</span>
+              </div>
+              <p className="mt-2">Đang tải dữ liệu...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!medicine) {
+    return (
+      <div id="content-page" className="content-page">
+        <div className="container-fluid">
+          <div className="row">
+            <div className="col-lg-12 text-center p-5">
+              <div className="alert alert-danger" role="alert">
+                {error || "Không tìm thấy thuốc"}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Get the primary unit from unitDetails if it exists
+  const primaryUnit =
+    medicine.unitDetails && medicine.unitDetails.length > 0
+      ? medicine.unitDetails.find((u) => u.conversionUnit === 1) ||
+        medicine.unitDetails[0]
+      : null;
+
   const initialValues: FormValues = {
-    name: "",
-    price: "",
-    quantity: 1,
-    vat: 5,
-    note: "",
-    maker: "",
-    origin: "",
-    retailProfit: 10,
-    activeElement: "",
-    kindOfMedicineId: 0,
-    unitDetails: [{ unitId: 0, conversionUnit: 1 }],
-    images: [],
+    name: medicine.name || "",
+    price: medicine.price ? medicine.price.toString() : "",
+    quantity: medicine.quantity || 0,
+    vat: medicine.vat || 0,
+    kindOfMedicineId: medicine.kindOfMedicineEntity?.id || 0,
+    unitId: primaryUnit?.unitId || 0,
+    note: medicine.note || "",
+    maker: medicine.maker || "",
+    origin: medicine.origin || "",
+    retailProfit: medicine.retailProfit || 0,
+    activeElement: medicine.activeElement || "",
+    unitDetails: medicine.unitDetails?.length
+      ? medicine.unitDetails.map((unit) => ({
+          id: unit.id || 0,
+          unitId: unit.unitId || 0,
+          conversionUnit: unit.conversionUnit || 1,
+          unitName: unit.unitName || "",
+        }))
+      : [{ unitId: primaryUnit?.unitId || 0, conversionUnit: 1 }],
   };
 
   return (
@@ -228,14 +315,21 @@ const CreateMedicine: React.FC = () => {
             <div className="iq-card">
               <div className="iq-card-header d-flex justify-content-between">
                 <div className="iq-header-title">
-                  <h4 className="card-title">Thêm thuốc mới</h4>
+                  <h4 className="card-title">Cập nhật thuốc</h4>
                 </div>
               </div>
               <div className="iq-card-body">
+                {/*{error && (*/}
+                {/*  <div className="alert alert-danger" role="alert">*/}
+                {/*    {error}*/}
+                {/*  </div>*/}
+                {/*)}*/}
+
                 <Formik
                   initialValues={initialValues}
                   validationSchema={validationSchema}
                   onSubmit={handleSubmit}
+                  enableReinitialize
                 >
                   {({
                     values,
@@ -286,6 +380,7 @@ const CreateMedicine: React.FC = () => {
                             type="number"
                             id="quantity"
                             name="quantity"
+                            min="0"
                             className={`form-control ${
                               errors.quantity && touched.quantity
                                 ? "is-invalid"
@@ -305,6 +400,8 @@ const CreateMedicine: React.FC = () => {
                             type="number"
                             id="vat"
                             name="vat"
+                            min="0"
+                            max="100"
                             className={`form-control ${
                               errors.vat && touched.vat ? "is-invalid" : ""
                             }`}
@@ -338,7 +435,7 @@ const CreateMedicine: React.FC = () => {
                         </div>
 
                         <div className="col-md-6 mb-3">
-                          <label htmlFor="maker">Nhà sản xuất *</label>
+                          <label htmlFor="maker">Nhà sản xuất</label>
                           <Field
                             type="text"
                             id="maker"
@@ -355,7 +452,7 @@ const CreateMedicine: React.FC = () => {
                         </div>
 
                         <div className="col-md-6 mb-3">
-                          <label htmlFor="origin">Xuất xứ *</label>
+                          <label htmlFor="origin">Xuất xứ</label>
                           <Field
                             type="text"
                             id="origin"
@@ -374,9 +471,7 @@ const CreateMedicine: React.FC = () => {
                         </div>
 
                         <div className="col-md-6 mb-3">
-                          <label htmlFor="activeElement">
-                            Thành phần hoạt chất *
-                          </label>
+                          <label htmlFor="activeElement">Hoạt chất</label>
                           <Field
                             type="text"
                             id="activeElement"
@@ -404,45 +499,64 @@ const CreateMedicine: React.FC = () => {
                                 : ""
                             }
                           >
-                            <Select
-                              id="kindOfMedicineId"
-                              placeholder="Tìm và chọn loại thuốc"
-                              noOptionsMessage={() =>
-                                "Không tìm thấy loại thuốc"
-                              }
-                              options={kindOfMedicines.map((kind) => ({
-                                value: kind.id,
-                                label: kind.name,
-                              }))}
-                              onChange={(selectedOption: any) => {
-                                setFieldValue(
-                                  "kindOfMedicineId",
-                                  selectedOption ? selectedOption.value : 0
-                                );
-                              }}
-                              className={`${
-                                errors.kindOfMedicineId &&
-                                touched.kindOfMedicineId
-                                  ? "is-invalid-select"
-                                  : ""
-                              }`}
-                              isClearable={true}
-                              isSearchable={true}
-                              styles={{
-                                control: (provided) => ({
-                                  ...provided,
-                                  borderColor:
-                                    errors.kindOfMedicineId &&
-                                    touched.kindOfMedicineId
-                                      ? "#dc3545"
-                                      : provided.borderColor,
-                                }),
-                                placeholder: (provided) => ({
-                                  ...provided,
-                                  color: "#757575",
-                                }),
-                              }}
-                            />
+                            {Array.isArray(kindOfMedicines) &&
+                            kindOfMedicines.length > 0 ? (
+                              <Select
+                                id="kindOfMedicineId"
+                                placeholder="Tìm và chọn loại thuốc"
+                                noOptionsMessage={() =>
+                                  "Không tìm thấy loại thuốc"
+                                }
+                                options={kindOfMedicines.map((kind) => ({
+                                  value: kind.id,
+                                  label: kind.name,
+                                }))}
+                                onChange={(selectedOption: any) => {
+                                  setFieldValue(
+                                    "kindOfMedicineId",
+                                    selectedOption ? selectedOption.value : 0
+                                  );
+                                }}
+                                value={
+                                  kindOfMedicines
+                                    .filter(
+                                      (kom) =>
+                                        kom.id === values.kindOfMedicineId
+                                    )
+                                    .map((kom) => ({
+                                      value: kom.id,
+                                      label: kom.name,
+                                    }))[0]
+                                }
+                                className={`${
+                                  errors.kindOfMedicineId &&
+                                  touched.kindOfMedicineId
+                                    ? "is-invalid-select"
+                                    : ""
+                                }`}
+                                isClearable={true}
+                                isSearchable={true}
+                                styles={{
+                                  control: (provided) => ({
+                                    ...provided,
+                                    borderColor:
+                                      errors.kindOfMedicineId &&
+                                      touched.kindOfMedicineId
+                                        ? "#dc3545"
+                                        : provided.borderColor,
+                                  }),
+                                  placeholder: (provided) => ({
+                                    ...provided,
+                                    color: "#757575",
+                                  }),
+                                }}
+                              />
+                            ) : (
+                              <div className="text-danger">
+                                Không có loại thuốc. Vui lòng thêm loại thuốc
+                                trước.
+                              </div>
+                            )}
                           </div>
                           <ErrorMessage
                             name="kindOfMedicineId"
@@ -450,18 +564,6 @@ const CreateMedicine: React.FC = () => {
                             className="text-danger"
                           />
                         </div>
-
-                        <div className="col-md-12 mb-3">
-                          <label htmlFor="note">Ghi chú</label>
-                          <Field
-                            as="textarea"
-                            id="note"
-                            name="note"
-                            rows={3}
-                            className="form-control"
-                          />
-                        </div>
-
                         <div className="col-md-12 mb-3">
                           <label>Đơn vị tính *</label>
                           <FieldArray name="unitDetails">
@@ -495,7 +597,7 @@ const CreateMedicine: React.FC = () => {
                                               e.target.value
                                             );
 
-                                            // Kiểm tra xem đơn vị này đã được chọn chưa
+                                            // Check if this unit is already selected
                                             const isDuplicate =
                                               values.unitDetails.some(
                                                 (item, i) =>
@@ -509,7 +611,7 @@ const CreateMedicine: React.FC = () => {
                                               toast.error(
                                                 "Đơn vị này đã được thêm. Vui lòng chọn đơn vị khác."
                                               );
-                                              // Reset về giá trị 0 (chưa chọn)
+                                              // Reset to 0 (unselected)
                                               setFieldValue(
                                                 `unitDetails.${index}.unitId`,
                                                 0
@@ -581,7 +683,7 @@ const CreateMedicine: React.FC = () => {
                                   type="button"
                                   className="btn btn-primary mt-2"
                                   onClick={() => {
-                                    // Thêm đơn vị mặc định
+                                    // Add default unit
                                     push({ unitId: 0, conversionUnit: 1 });
                                   }}
                                 >
@@ -591,7 +693,7 @@ const CreateMedicine: React.FC = () => {
                             )}
                           </FieldArray>
 
-                          {/* Hiển thị lỗi tổng nếu có */}
+                          {/* Show aggregate error if any */}
                           {typeof errors.unitDetails === "string" && (
                             <div className="text-danger">
                               {errors.unitDetails}
@@ -600,28 +702,77 @@ const CreateMedicine: React.FC = () => {
                         </div>
 
                         <div className="col-md-12 mb-3">
+                          <label htmlFor="note">Ghi chú</label>
+                          <Field
+                            as="textarea"
+                            id="note"
+                            name="note"
+                            rows={3}
+                            className="form-control"
+                          />
+                        </div>
+
+                        <div className="col-md-12 mb-3">
                           <label>Hình ảnh thuốc *</label>
                           <div className="mb-3">
                             <FilePond
-                              ref={(ref: any) => setPond(ref)}
                               files={files}
                               onupdatefiles={(fileItems) => {
-                                handleFilePondUpdate(fileItems, setFieldValue);
+                                setFiles(fileItems);
+                                if (fileItems.length === 0) {
+                                  setImageError("Vui lòng tải lên ít nhất một hình ảnh");
+                                } else {
+                                  setImageError(null);
+                                }
                               }}
                               allowMultiple={true}
-                              maxFiles={10}
+                              maxFiles={5}
                               allowFileSizeValidation={true}
                               maxFileSize="5MB"
                               labelMaxFileSizeExceeded="File quá lớn"
                               labelMaxFileSize="Kích thước tối đa là 5MB"
-                              acceptedFileTypes={['image/png', 'image/jpeg', 'image/jpg']}
+                              acceptedFileTypes={[
+                                "image/png",
+                                "image/jpeg",
+                                "image/jpg",
+                              ]}
                               labelFileTypeNotAllowed="Chỉ chấp nhận file ảnh (jpg, png)"
                               fileValidateTypeLabelExpectedTypes="Chỉ chấp nhận file ảnh: {allTypes}"
                               labelIdle='Kéo và thả hình ảnh vào đây hoặc <span class="filepond--label-action">Chọn tệp</span>'
                               credits={false}
+                              server={{
+                                load: (
+                                  source,
+                                  load,
+                                  error,
+                                  progress,
+                                  abort
+                                ) => {
+                                  // This loads the image preview for existing images
+                                  const isCompleteUrl =
+                                    source.startsWith("http") ||
+                                    source.startsWith("https");
+                                  const imageUrl = isCompleteUrl
+                                    ? source
+                                    : `${process.env.REACT_APP_API_URL}/uploads/${source}`;
+
+                                  fetch(imageUrl)
+                                    .then((response) => response.blob())
+                                    .then((blob) => {
+                                      load(blob);
+                                    })
+                                    .catch(() => {
+                                      error("Could not load image");
+                                    });
+                                },
+                              }}
                             />
+                            {imageError && (
+                              <div className="text-danger mt-2">
+                                {imageError}
+                              </div>
+                            )}
                           </div>
-                          <ErrorMessage name="images" component="div" className="text-danger" />
                         </div>
                       </div>
 
@@ -641,7 +792,7 @@ const CreateMedicine: React.FC = () => {
                               Đang xử lý...
                             </>
                           ) : (
-                            "Thêm thuốc"
+                            "Cập nhật thuốc"
                           )}
                         </button>
                         <button
@@ -664,4 +815,4 @@ const CreateMedicine: React.FC = () => {
   );
 };
 
-export default CreateMedicine;
+export default UpdateMedicine;
