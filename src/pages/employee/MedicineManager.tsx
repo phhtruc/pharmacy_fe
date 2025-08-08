@@ -81,15 +81,18 @@ const MedicineManager = () => {
             <div className="iq-card">
               <div className="iq-card-header d-flex justify-content-between">
                 <div className="iq-header-title">
-                  <h4 className="card-title">Medication management</h4>
+                  <h4 className="card-title">Quản lý thuốc</h4>
                 </div>
               </div>
               <div className="iq-card-body">
                 <div id="table" className="table-editable">
                   <span className="table-add float-right mb-3 mr-2">
-                    <button className="btn btn-sm iq-bg-success">
+                    <button
+                      className="btn btn-sm iq-bg-success"
+                      onClick={() => navigate("/employee/medicines/add")}
+                    >
                       <i className="ri-add-fill">
-                        <span className="pl-1">Add New</span>
+                        <span className="pl-1">Thêm mới</span>
                       </i>
                     </button>
                   </span>
@@ -107,10 +110,10 @@ const MedicineManager = () => {
                         <tr>
                           <th>STT</th>
                           <th>Code</th>
-                          <th>Name</th>
-                          <th>Price</th>
-                          <th>Origin</th>
-                          <th>Kind Medicine</th>
+                          <th>Tên</th>
+                          <th>Giá</th>
+                          <th>Xuất xứ</th>
+                          <th>Loại thuốc</th>
                           <th>Action</th>
                         </tr>
                       </thead>
@@ -125,7 +128,7 @@ const MedicineManager = () => {
                               <td>{medicine.name}</td>
                               <td>{medicine.price} VND</td>
                               <td>{medicine.origin}</td>
-                              <td>{medicine.kindOfMedicine?.name}</td>
+                              <td>{medicine.kindOfMedicineEntity?.name}</td>
                               <td>
                                 <button
                                   className="btn btn-sm btn-info mr-2"
@@ -142,7 +145,7 @@ const MedicineManager = () => {
                                   className="btn btn-sm btn-primary mr-2"
                                   onClick={() =>
                                     navigate(
-                                      `/employee/medicines/edit/${medicine.id}`
+                                      `/employee/medicines/${medicine.id}/edit`
                                     )
                                   }
                                   title="Edit"

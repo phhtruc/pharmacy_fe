@@ -362,7 +362,7 @@ const Narbar = () => {
                         role="button"
                         onClick={handleLogout}
                       >
-                        Sign out<i className="ri-login-box-line ml-2"></i>
+                        Đăng xuất<i className="ri-login-box-line ml-2"></i>
                       </button>
                     </div>
                   </div>
